@@ -9,13 +9,14 @@ var Auth = require('./auth');
 
 router.param('cID', function(req, res, next, id) {
   Course.findById(req.params.cID)
-      .populate('user')
+      .populate('user', '_id fullName')
       .populate({
           path: 'reviews',
           model: 'Review',
           populate: {
               path: 'user',
-              model: 'User'
+              model: 'User',
+              select: '_id fullName'
           }
       })
       .exec(function(err, doc) {
@@ -32,7 +33,7 @@ router.param('cID', function(req, res, next, id) {
 
 router.get('/courses', function(req, res, next) {
     res.status(200);
-    Course.find({})
+    Course.find({}, '_id title')
         .exec(function(err, courses){
             if (err) {
                 return next(err);
@@ -45,7 +46,8 @@ router.get('/courses', function(req, res, next) {
 router.get('/courses/:cID', function(req, res, next) {
     res.status(200);
     var dataArray = [];
-    dataArray.push(req.course.toObject({virtuals: true}))
+    dataArray.push(req.course.toObject({virtuals: true}));
+    console.log(req.course.user);
     res.json({data: dataArray});
 });
 
@@ -109,15 +111,9 @@ router.put('/courses/:cID', Auth, function(req, res, next){
     var authorized = (user === courseOwner);
 
     if (authorized) {
-        var course = new Course(req.body);
-
-        // Make sure the step numbers equal to the index in the course plus one i.e. starts from 1
-        for (var i = 0; i < course.steps.length; i++) {
-            course.steps[i].stepNumber = i + 1;
-        }
 
         // save new course
-        course.update(req.body, {runValidators: true}, function(err, course) {
+        req.course.update(req.body, {runValidators: true}, function(err, course) {
             // display custom error message
             if (err) {
                 if (err.name === 'ValidationError') {
@@ -262,7 +258,7 @@ router.post('/courses/:cID/reviews', Auth, function(req, res, next) {
            }
        }
        res.status(201);
-       res.location('/courses' + req.course._id);
+       res.location('/courses/' + req.course._id);
        res.end();
     });
 });
