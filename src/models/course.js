@@ -46,6 +46,18 @@ CourseSchema.path('steps').validate(function (steps) {
    return true;
 });
 
+// pre-save, create step numbers
+CourseSchema.pre('save', function(next) {
+    var course = this;
+    for (var i = 0; i<course.steps.length; i++) {
+        course.steps[i].stepNumber = i + 1;
+    }
+    next();
+});
+
+
+
+
 CourseSchema.virtual('overallRating').get(function(){
    var total = 0;
    for (var i=0; i < this.reviews.length; i++) {

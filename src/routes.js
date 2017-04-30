@@ -57,11 +57,6 @@ router.post('/courses', Auth, function(req, res, next){
     if (req.body.user._id === req.user._id.toJSON()) {
         var course = new Course(req.body);
 
-        // Make sure the step numbers equal to the index in the course plus one i.e. starts from 1
-        for (var i = 0; i < course.steps.length; i++) {
-            course.steps[i].stepNumber = i + 1;
-        }
-
         // save new course
         course.save(function(err) {
             // display custom error message
